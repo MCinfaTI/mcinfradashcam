@@ -7,8 +7,8 @@ services:
     restart: unless-stopped
     ports:
       # Porta acessível pela VM do Nginx Proxy Manager.
-      # Restrinja 8088 no firewall para o IP da VM do NPM sempre que possível.
-      - "8088:3000"
+      # Restrinja 8998 no firewall para o IP da VM do NPM sempre que possível.
+      - "8998:3000"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/"]
       interval: 30s
