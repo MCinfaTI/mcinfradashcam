@@ -18,3 +18,10 @@
 - [x] Criar Dockerfile multi-stage e docker-compose.yml, além de `docker/nginx.conf`.
 - [x] Documentar a publicação em mcinfradashcam.duckdns.org com Nginx Proxy Manager em `DEPLOY-VPS.md`.
 - [ ] Validar build e configuração do container na VPS — não foi possível executar Docker no sandbox porque o comando não está instalado; `pnpm check` e `pnpm build` continuam válidos.
+
+## Correção — Build Docker e NPM externo
+
+- [x] Copiar `patches/` antes do `pnpm install` no Dockerfile.
+- [x] Remover o Nginx do container da aplicação e servir a build pelo servidor HTTP do projeto.
+- [x] Atualizar o encaminhamento do Nginx Proxy Manager para a IP da VM dos projetos.
+- [x] Validar novamente o build React e salvar checkpoint corrigido; Docker não está instalado no sandbox para executar o build da imagem.

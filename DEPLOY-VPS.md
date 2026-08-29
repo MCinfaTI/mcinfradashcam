@@ -1,19 +1,26 @@
 # Implantação na VPS — MC Infra TI Dash Cam
 
-## Arquitetura
+## Arquitetura corrigida
 
-O projeto é uma SPA React compilada em uma imagem multi-stage. A etapa Node gera `dist/public`; a etapa final usa Nginx Alpine para servir os arquivos estáticos, aplicar fallback para as rotas `/` e `/dashcam`, habilitar gzip e adicionar cabeçalhos básicos de segurança. O Compose publica o container somente em `127.0.0.1:8088`, deixando o Nginx Proxy Manager responsável pelo acesso externo e pelo TLS.
+A VM dos projetos executa somente o container Node da aplicação. Não há Nginx local nesse servidor. O container compila a aplicação React e executa o servidor HTTP Express incluído no projeto, que entrega `dist/public` e faz fallback para as rotas `/` e `/dashcam`.
 
-## 1. Baixar o projeto
+O Docker Compose publica a aplicação na porta `8088` da VM dos projetos, encaminhando internamente para a porta `3000` do container. A VM separada do Nginx Proxy Manager acessa essa porta pela rede privada ou pelo IP interno da VM dos projetos.
 
-Na VPS, execute:
+## 1. Atualizar o código na VM dos projetos
 
 ```bash
 git clone https://github.com/amdremessias/mcinfra-dashcam.git
 cd mcinfra-dashcam
 ```
 
-## 2. Subir o container
+Se o diretório já existir:
+
+```bash
+cd /opt/mcinfra-dashcam
+git pull
+```
+
+## 2. Construir e iniciar o serviço
 
 ```bash
 docker compose up -d --build
@@ -21,11 +28,13 @@ docker compose ps
 curl -I http://127.0.0.1:8088/
 ```
 
-O retorno do `curl` deve apresentar status `200`. Para acompanhar a aplicação:
+O `curl` deve retornar `HTTP/1.1 200 OK`. Para acompanhar o serviço:
 
 ```bash
 docker compose logs -f --tail=100
 ```
+
+O Dockerfile copia `patches/` antes do `pnpm install`, corrigindo o erro `ENOENT` relacionado a `patches/wouter@3.7.1.patch`.
 
 Para atualizar depois de novos commits:
 
@@ -34,31 +43,47 @@ git pull
 docker compose up -d --build
 ```
 
-## 3. Criar o Proxy Host no Nginx Proxy Manager
+## 3. Configurar o Proxy Host no Nginx Proxy Manager
 
-No Nginx Proxy Manager, crie um novo **Proxy Host** com os seguintes valores:
+Na UI do Nginx Proxy Manager instalado na outra VM, crie ou edite um **Proxy Host**:
 
 | Campo | Valor |
 |---|---|
 | Domain Names | `mcinfradashcam.duckdns.org` |
 | Scheme | `http` |
-| Forward Hostname / IP | `127.0.0.1` se o NPM estiver no host; caso esteja em outro container, use o nome/IP acessível do serviço |
+| Forward Hostname / IP | IP interno ou hostname da VM dos projetos |
 | Forward Port | `8088` |
 | Block Common Exploits | Ativado |
-| Websockets Support | Pode permanecer ativado |
+| Websockets Support | Ativado ou padrão |
 
-Na aba **SSL**, solicite um novo certificado Let's Encrypt, aceite os termos e ative **Force SSL** e **HTTP/2 Support**. Salve e teste em `https://mcinfradashcam.duckdns.org`.
+Não use `127.0.0.1` no campo **Forward Hostname / IP**, pois isso apontaria para a VM do próprio Nginx Proxy Manager. Use, por exemplo, o IP privado da VM onde o Docker está executando, como `192.168.x.x`, conforme a sua rede.
 
-## Atenção quando o Nginx Proxy Manager também estiver em Docker
+Na aba **SSL**, solicite um certificado Let's Encrypt para `mcinfradashcam.duckdns.org`, aceite os termos, ative **Force SSL** e, opcionalmente, **HTTP/2 Support**. O domínio deve apontar para o IP público da VM que recebe o Nginx Proxy Manager, não necessariamente para a VM dos projetos.
 
-Se o NPM estiver em um container separado, `127.0.0.1` aponta para o próprio container do NPM, não para a VPS. Nesse caso, conecte ambos os serviços a uma rede Docker compartilhada e encaminhe para o nome do serviço, ou encaminhe para o IP do host usando a configuração de rede disponível na sua instalação. Não exponha a porta 8088 publicamente sem necessidade.
+## 4. Rede e firewall
 
-## 4. DNS e firewall
+A porta TCP `8088` precisa ser acessível somente pela VM do Nginx Proxy Manager. Se utilizar UFW na VM dos projetos, permita apenas o IP interno do NPM:
 
-O registro DuckDNS precisa apontar para o IP público da VPS. As portas TCP 80 e 443 devem estar liberadas no firewall e direcionadas ao Nginx Proxy Manager. A porta 8088 deve continuar restrita ao localhost ou à rede interna usada pelo proxy.
+```bash
+sudo ufw allow from IP_DA_VM_DO_NPM to any port 8088 proto tcp
+```
+
+Evite abrir a porta `8088` para a internet inteira. As portas públicas `80` e `443` devem continuar sendo responsabilidade do Nginx Proxy Manager.
 
 ## Diagnóstico rápido
 
-Se o domínio não abrir, valide primeiro `curl -I http://127.0.0.1:8088/` na VPS. Se funcionar, o problema está entre o Nginx Proxy Manager, DNS ou firewall. Se o container não iniciar, execute `docker compose logs --tail=100`. Se a rota `/dashcam` retornar 404, confirme que o Proxy Host está encaminhando para o Nginx do container e que o arquivo `docker/nginx.conf` foi aplicado durante o build.
+Se o build falhar novamente, confirme que a pasta `patches` está presente no checkout:
 
-O link do WhatsApp incluído na página ainda é genérico (`wa.me/?text=...`). Antes de divulgar o site, substitua-o pelo número oficial da MC Infra TI no arquivo `client/src/pages/Dashcam.tsx` e gere novamente a imagem com `docker compose up -d --build`.
+```bash
+ls -la patches
+```
+
+Se o container não iniciar:
+
+```bash
+docker compose logs --tail=100 mcinfra-dashcam
+```
+
+Se `curl -I http://127.0.0.1:8088/` funcionar na VM dos projetos, mas o domínio não abrir, verifique o IP usado no **Forward Hostname / IP**, a rota entre as duas VMs, o firewall e o certificado no NPM.
+
+O link do WhatsApp da página ainda é genérico (`wa.me/?text=...`). Antes da divulgação, substitua-o pelo número oficial da MC Infra TI em `client/src/pages/Dashcam.tsx` e refaça o build.
