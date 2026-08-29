@@ -1,0 +1,9 @@
+# Configuração de publicação da landing page MC Infra TI no Netlify.
+[build]
+  command = "pnpm build"
+  publish = "dist/public"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
