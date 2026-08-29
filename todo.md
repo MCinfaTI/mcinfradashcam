@@ -5,3 +5,16 @@
 - [ ] Salvar um checkpoint final antes da exportação.
 - [ ] Orientar a criação do repositório público e a conexão com o Netlify.
 - [ ] Alertar sobre a necessidade de substituir o link genérico do WhatsApp antes da publicação.
+
+## Nova etapa — Login e exportação
+
+- [ ] Abrir a autenticação do GitHub no navegador conectado.
+- [ ] Aguardar o usuário concluir o login.
+- [ ] Exportar o projeto para o repositório Git escolhido.
+
+## Nova etapa — Docker Compose e VPS
+
+- [ ] Ler as orientações de computação persistente e definir o container web.
+- [x] Criar Dockerfile multi-stage e docker-compose.yml, além de `docker/nginx.conf`.
+- [x] Documentar a publicação em mcinfradashcam.duckdns.org com Nginx Proxy Manager em `DEPLOY-VPS.md`.
+- [ ] Validar build e configuração do container na VPS — não foi possível executar Docker no sandbox porque o comando não está instalado; `pnpm check` e `pnpm build` continuam válidos.
