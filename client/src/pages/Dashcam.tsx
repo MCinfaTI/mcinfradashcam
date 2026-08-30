@@ -5,7 +5,7 @@ import { ArrowDownRight, ArrowRight, Check, ChevronDown, CircleDot, Clock3, Cpu,
 const heroImage = "/manus-storage/mcinfra-dashcam-hero_8a820a85.jpg";
 const installImage = "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?auto=format&fit=crop&w=1200&q=85";
 const roadImage = "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=1400&q=85";
-const logoImage = "/manus-storage/mcinfra-dashcam-logo_f548a818.png";
+const logoImage = "/escudoico.png";
 
 const waMessage = encodeURIComponent("Olá, quero receber uma recomendação de Dash Cam para o meu veículo.");
 const contactHref = `https://wa.me/?text=${waMessage}`;

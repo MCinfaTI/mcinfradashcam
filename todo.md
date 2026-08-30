@@ -25,3 +25,10 @@
 - [x] Remover o Nginx do container da aplicação e servir a build pelo servidor HTTP do projeto.
 - [x] Atualizar o encaminhamento do Nginx Proxy Manager para a IP da VM dos projetos.
 - [x] Validar novamente o build React e salvar checkpoint corrigido; Docker não está instalado no sandbox para executar o build da imagem.
+
+## Nova etapa — Logo real
+
+- [ ] Copiar a logo enviada para o diretório de assets do projeto.
+- [ ] Atualizar a referência da logo em `client/src/pages/Dashcam.tsx`.
+- [ ] Atualizar o favicon em `client/index.html`.
+- [ ] Validar build, salvar checkpoint e orientar o novo build na VPS.
